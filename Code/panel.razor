@@ -30,24 +30,35 @@
 
 <root>
 	<div class="screen">
-		<h1>Maintenance</h1>
-		<button onclick="@CrankWheel">Crank Wheel</button>
-		<div>Energy: @Energy</div>
+		<h1>Train Idle</h1>
+
+		<button onclick="@ClickMoney">Get a Job</button>
+
+		<div>Money: @Game?.Money.ToString("0")</div>
+		<div>Income: @Game?.MoneyPerSecond.ToString("0.0") / sec</div>
 	</div>
 </root>
 
 @code
 {
-	public int Energy { get; set; } = 0;
+	private Logic Game;
 
-	void CrankWheel()
+	protected override void OnStart()
 	{
-		Energy++;
+		Game = Scene.GetAllComponents<Logic>().FirstOrDefault();
+	}
+
+	void ClickMoney()
+	{
+		Game.Money++;
 		StateHasChanged();
 	}
 
 	protected override int BuildHash()
 	{
-		return System.HashCode.Combine( Energy );
+		return System.HashCode.Combine(
+			Game.Money,
+			Game.MoneyPerSecond
+		);
 	}
 }
