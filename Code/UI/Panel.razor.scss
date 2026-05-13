@@ -1,0 +1,206 @@
+.screen {
+    width: 100%;
+    height: 100%;
+    background-color: #111;
+    color: white;
+    font-size: 24px;
+    flex-direction: column;
+    pointer-events: all;
+    position: relative;
+}
+
+.top-bar {
+    height: 80px;
+    width: 100%;
+    background-color: #1b1b1b;
+    padding: 16px 32px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.title {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.money-bar {
+    gap: 32px;
+    align-items: center;
+}
+
+.stat {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.main {
+    flex-grow: 1;
+    width: 100%;
+    padding: 32px;
+    gap: 32px;
+    flex-direction: column;
+}
+
+.panel {
+    background-color: #222;
+    border-radius: 16px;
+    padding: 32px;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.top-row {
+    flex-grow: 1;
+    width: 100%;
+    gap: 32px;
+    flex-direction: row;
+}
+
+.train-panel {
+    flex-grow: 1;
+    position: relative;
+}
+
+.train-counts {
+    position: absolute;
+    right: 32px;
+    top: 32px;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shop-panel {
+    width: 420px;
+}
+
+h2 {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.fuel-panel {
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.fuel-description {
+    font-size: 24px;
+    line-height: 32px;
+    max-width: 900px;
+}
+
+.fuel-stats {
+    flex-direction: column;
+    gap: 8px;
+    font-size: 22px;
+}
+
+button {
+    font-size: 24px;
+    padding: 16px 24px;
+    background-color: #444;
+    color: white;
+    border-radius: 8px;
+}
+
+.get-a-job-button {
+    width: 160px;
+    height: 64px;
+    align-self: flex-start;
+}
+
+.can-afford:hover {
+    background-color: #333;
+}
+
+.can-afford:active {
+    transform: scale( 0.96 );
+}
+
+.cant-afford {
+    opacity: 0.4;
+}
+
+.popup-backdrop {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba( 0, 0, 0, 0.7 );
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+}
+
+.popup-window {
+    width: 520px;
+    background-color: #222;
+    border-radius: 16px;
+    padding: 32px;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.popup-window h2 {
+    font-size: 42px;
+    margin-bottom: 8px;
+}
+
+.job-button-area {
+    position: relative;
+    width: 160px;
+    height: 100px;
+}
+
+.floating-money {
+    position: absolute;
+    left: 58px;
+    top: 0px;
+    font-size: 28px;
+    font-weight: bold;
+    color: white;
+    pointer-events: none;
+}
+
+.content {
+    flex-grow: 1;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+.side-menu {
+    width: 180px;
+    background-color: #181818;
+    padding: 24px 16px;
+    gap: 12px;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.menu-button {
+    width: 100%;
+    height: 56px;
+    font-size: 22px;
+    padding: 12px 16px;
+    background-color: #2a2a2a;
+    color: white;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-button:hover {
+    background-color: #333;
+}
+
+.menu-button.active-tab {
+    background-color: #555;
+}
+
+.routes-panel {
+    flex-grow: 1;
+}

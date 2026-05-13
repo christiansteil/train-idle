@@ -1,0 +1,287 @@
+@using Sandbox;
+@using System;
+@using System.Collections.Generic;
+@using System.Linq;
+@using Sandbox.UI;
+@attribute [StyleSheet ( "Panel.razor.scss")]
+@inherits PanelComponent
+
+<root>
+	<div class="screen">
+		<div class="top-bar">
+			<div class="title">Train Idle</div>
+
+			<div class="money-bar">
+				<div class="stat">Money: $@FormatNumber( Game?.Money ?? 0 )</div>
+				<div class="stat">Money per second: $@FormatNumber( Game?.MoneyPerSecond ?? 0 )</div>
+			</div>
+		</div>
+
+		<div class="content">
+			<div class="side-menu">
+				<button class="menu-button @GetTabClass( "Trains" )" onclick="@(() => SetTab( "Trains" ))">
+					Trains
+				</button>
+
+				<button class="menu-button @GetTabClass( "Routes" )" onclick="@(() => SetTab( "Routes" ))">
+					Routes
+				</button>
+			</div>
+
+			@if ( CurrentTab == "Trains" )
+			{
+				<div class="main">
+					<div class="top-row">
+						<div class="panel train-panel">
+							<div class="train-counts">
+								<div>Trains: @(Game?.Trains ?? 0) / 1</div>
+								<div>Train Cars: @(Game?.TrainCars ?? 0)</div>
+							</div>
+
+							<div class="job-button-area">
+								<button class="get-a-job-button can-afford" onclick="@ClickMoney">
+									Get a Job
+								</button>
+							</div>
+						</div>
+
+						<div class="panel shop-panel">
+							<h2>Shop</h2>
+
+							@if ( Game is not null && Game.Trains < 1 )
+							{
+								<button class="@GetButtonClass( Game.CanBuyTrain() )" onclick="@BuyTrain" disabled="@(!Game.CanBuyTrain())">
+									Buy Train - $@FormatNumber( Game.TrainCost )
+								</button>
+							}
+							else if ( Game is not null )
+							{
+								<button class="@GetButtonClass( Game.CanBuyTrainCar() )" onclick="@BuyTrainCar" disabled="@(!Game.CanBuyTrainCar())">
+									Buy Train Car - $@FormatNumber( Game.TrainCarCost )
+								</button>
+							}
+						</div>
+					</div>
+
+					<div class="panel fuel-panel">
+						<h2>Fuel</h2>
+
+						<div class="fuel-description">
+							Add fuel to increase the speed of your trains, increasing profits.
+						</div>
+
+						<div class="fuel-stats">
+							<div>Coal: @FormatNumber( Game?.Coal ?? 0 )</div>
+							<div>Coal miners: @(Game?.CoalMiners ?? 0)</div>
+							<div>Coal production: @FormatNumber( Game?.CoalPerSecond ?? 0 ) / sec</div>
+							<div>Train speed: x @FormatNumber( Game?.CoalIncomeMultiplier ?? 1 )</div>
+						</div>
+
+						@if ( Game is not null )
+						{
+							<button class="@GetButtonClass( Game.CanBuyCoalMiner() )" onclick="@BuyCoalMiner" disabled="@(!Game.CanBuyCoalMiner())">
+								Buy Coal Miner - $@FormatNumber( Game.CoalMinerCost )
+							</button>
+						}
+					</div>
+				</div>
+			}
+			else if ( CurrentTab == "Routes" )
+			{
+				<div class="main">
+					<div class="panel routes-panel">
+						<h2>Routes</h2>
+
+						<div>
+							Route visualization will go here.
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+
+		@foreach ( var text in FloatingTexts )
+		{
+			<div class="floating-money" style="@GetFloatingTextStyle( text )">
+				@text.Text
+			</div>
+		}
+
+		@if ( Game is not null && Game.ShowOfflinePopup )
+		{
+			<div class="popup-backdrop">
+				<div class="popup-window">
+					<h2>Welcome Back!</h2>
+
+					<div>@($"You were offline for {FormatTime( Game.LastOfflineSeconds )}.")</div>
+					<div>@($"You earned ${FormatNumber( Game.LastOfflineMoneyEarned )}.")</div>
+
+					<button class="can-afford" onclick="@CloseOfflinePopup">
+						Close
+					</button>
+				</div>
+			</div>
+		}
+	</div>
+</root>
+
+@code
+{
+	private Logic Game;
+	private string CurrentTab = "Trains";
+
+	private List<FloatingText> FloatingTexts = new();
+	private int NextFloatingTextId = 0;
+
+	private const float FloatingTextLifetime = 0.8f;
+
+	class FloatingText
+	{
+		public int Id { get; set; }
+		public string Text { get; set; }
+		public TimeSince Age { get; set; }
+		public Vector2 Position { get; set; }
+	}
+
+	string GetFloatingTextStyle( FloatingText text )
+	{
+		float age = text.Age;
+		float progress = Math.Clamp( age / FloatingTextLifetime, 0f, 1f );
+
+		float y = -40f * progress;
+		float opacity = 1f - progress;
+
+		float x = text.Position.x / 1.63f;
+		float startY = text.Position.y / 7.5f;
+
+		return $"left: {x}px; top: {startY}px; transform: translate(-50%, -50%) translateY({y}px); opacity: {opacity};";
+	}
+
+	protected override void OnStart()
+	{
+		Game = Scene.GetAllComponents<Logic>().FirstOrDefault();
+	}
+
+	void BuyTrain()
+	{
+		Game?.BuyTrain();
+		StateHasChanged();
+	}
+
+	void BuyTrainCar()
+	{
+		Game?.BuyTrainCar();
+		StateHasChanged();
+	}
+
+	void BuyCoalMiner()
+	{
+		Game?.BuyCoalMiner();
+		StateHasChanged();
+	}
+
+	void ClickMoney()
+	{
+		if ( Game is null )
+			return;
+
+		Game.ClickMoney();
+
+		FloatingTexts.Add( new FloatingText
+		{
+			Id = NextFloatingTextId++,
+			Text = "+1",
+			Age = 0,
+			Position = Mouse.Position
+		} );
+
+		StateHasChanged();
+	}
+
+	void CloseOfflinePopup()
+	{
+		Game?.CloseOfflinePopup();
+		StateHasChanged();
+	}
+
+	string FormatTime( double seconds )
+	{
+		int totalSeconds = (int)Math.Floor( seconds );
+
+		int hours = totalSeconds / 3600;
+		int minutes = (totalSeconds % 3600) / 60;
+		int secs = totalSeconds % 60;
+
+		if ( hours > 0 )
+			return $"{hours}h {minutes}m {secs}s";
+
+		if ( minutes > 0 )
+			return $"{minutes}m {secs}s";
+
+		if ( seconds < 10 )
+			return $"{seconds:0.0}s";
+
+		return $"{secs}s";
+	}
+
+	string FormatNumber( double number )
+	{
+		return number.ToString( "0.0" );
+	}
+
+	string GetButtonClass( bool canBuy )
+	{
+	return canBuy ? "can-afford" : "cant-afford";
+	}
+
+	void SetTab( string tab )
+	{
+		CurrentTab = tab;
+		StateHasChanged();
+	}
+
+	string GetTabClass( string tab )
+	{
+		return CurrentTab == tab ? "active-tab" : "";
+	}
+
+	protected override int BuildHash()
+	{
+		FloatingTexts.RemoveAll( text => text.Age > FloatingTextLifetime );
+
+		int animationFrame = FloatingTexts.Count > 0
+			? (int)(RealTime.Now * 60)
+			: 0;
+
+		int animationHash = System.HashCode.Combine(
+			FloatingTexts.Count,
+			animationFrame
+		);
+
+		int fuelHash = System.HashCode.Combine(
+			Game?.Coal ?? 0,
+			Game?.CoalMiners ?? 0,
+			Game?.CoalPerSecond ?? 0,
+			Game?.CoalIncomeMultiplier ?? 1
+		);
+
+		int tabHash = CurrentTab.GetHashCode();
+
+		int extraHash = System.HashCode.Combine(
+			animationHash,
+			fuelHash,
+			tabHash
+		);
+
+		return System.HashCode.Combine(
+			Game?.Money ?? 0,
+			Game?.Trains ?? 0,
+			Game?.TrainCars ?? 0,
+			Game?.MoneyPerSecond ?? 0,
+			Game?.ShowOfflinePopup ?? false,
+			Game?.LastOfflineMoneyEarned ?? 0,
+			Game?.LastOfflineSeconds ?? 0,
+			extraHash
+		);
+	}
+}
