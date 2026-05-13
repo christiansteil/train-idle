@@ -41,8 +41,8 @@
           "ZIndex": 100
         },
         {
-          "__type": "Sandbox.panel",
-          "__guid": "aa07dfe4-976b-4fba-b15b-f3c9ad2f2f1f",
+          "__type": "Sandbox.Panel",
+          "__guid": "02d2fe40-952c-43ad-9dc6-b6f847bd0e9a",
           "__enabled": true,
           "Flags": 0,
           "OnComponentDestroy": null,
@@ -124,14 +124,20 @@
           "__guid": "893358d9-8475-4b80-8888-a4805e83da98",
           "__enabled": true,
           "Flags": 0,
+          "Coal": 0,
+          "CoalMiners": 0,
+          "LastOfflineMoneyEarned": 0,
+          "LastOfflineSeconds": 0,
           "Money": 0,
-          "MoneyPerSecond": 0,
           "OnComponentDestroy": null,
           "OnComponentDisabled": null,
           "OnComponentEnabled": null,
           "OnComponentFixedUpdate": null,
           "OnComponentStart": null,
-          "OnComponentUpdate": null
+          "OnComponentUpdate": null,
+          "ShowOfflinePopup": false,
+          "TrainCars": 0,
+          "Trains": 0
         }
       ],
       "Children": []
@@ -157,13 +163,18 @@
       "CustomBounds": false
     },
     "GameObjectSystems": {
+      "Sandbox.MovieMaker.MovieRecorderSystem": {
+        "DisableClientRecording": false
+      },
+      "Sandbox.Clutter.ClutterGridSystem": {
+        "Storage": {
+          "$blob": "71fa3ce0-aad8-48c8-ae0f-89c666eaa7c0"
+        }
+      },
       "Sandbox.SelectionSetsSystem": {
         "Data": {
           "SelectionSets": []
         }
-      },
-      "Sandbox.MovieMaker.MovieRecorderSystem": {
-        "DisableClientRecording": false
       }
     }
   },
