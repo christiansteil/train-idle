@@ -41,8 +41,8 @@
           "ZIndex": 100
         },
         {
-          "__type": "Sandbox.Panel",
-          "__guid": "02d2fe40-952c-43ad-9dc6-b6f847bd0e9a",
+          "__type": "Sandbox.UI.Panel",
+          "__guid": "4f45cced-8822-4f2a-ab4e-fe32ea630f17",
           "__enabled": true,
           "Flags": 0,
           "OnComponentDestroy": null,
@@ -135,6 +135,7 @@
           "OnComponentFixedUpdate": null,
           "OnComponentStart": null,
           "OnComponentUpdate": null,
+          "RouteProgress": 0,
           "ShowOfflinePopup": false,
           "TrainCars": 0,
           "Trains": 0
@@ -163,17 +164,17 @@
       "CustomBounds": false
     },
     "GameObjectSystems": {
+      "Sandbox.SelectionSetsSystem": {
+        "Data": {
+          "SelectionSets": []
+        }
+      },
       "Sandbox.MovieMaker.MovieRecorderSystem": {
         "DisableClientRecording": false
       },
       "Sandbox.Clutter.ClutterGridSystem": {
         "Storage": {
           "$blob": "71fa3ce0-aad8-48c8-ae0f-89c666eaa7c0"
-        }
-      },
-      "Sandbox.SelectionSetsSystem": {
-        "Data": {
-          "SelectionSets": []
         }
       }
     }
