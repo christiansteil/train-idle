@@ -46,7 +46,7 @@
 		width: 100%;
 		padding: 32px;
 		gap: 32px;
-		flex-direction: row;
+		flex-direction: column;
 	}
 
 	.panel {
@@ -55,6 +55,13 @@
 		padding: 32px;
 		flex-direction: column;
 		gap: 16px;
+	}
+
+	.top-row {
+		flex-grow: 1;
+		width: 100%;
+		gap: 32px;
+		flex-direction: row;
 	}
 
 	.train-panel {
@@ -78,6 +85,23 @@
 	h2 {
 		font-size: 40px;
 		margin-bottom: 12px;
+	}
+
+	.fuel-panel {
+		width: 100%;
+		flex-shrink: 0;
+	}
+
+	.fuel-description {
+		font-size: 24px;
+		line-height: 32px;
+		max-width: 900px;
+	}
+
+	.fuel-stats {
+		flex-direction: column;
+		gap: 8px;
+		font-size: 22px;
 	}
 
 	button {
@@ -160,7 +184,8 @@
 			</div>
 		</div>
 
-		<div class="main">
+	<div class="main">
+		<div class="top-row">
 			<div class="panel train-panel">
 				<div class="train-counts">
 					<div>Trains: @(Game?.Trains ?? 0) / 1</div>
@@ -168,14 +193,9 @@
 				</div>
 
 				<div class="job-button-area">
-					<button class="get-a-job-button can-afford" onclick="@ClickMoney">Get a Job</button>
-
-					@foreach ( var text in FloatingTexts )
-					{
-						<div class="floating-money" style="@GetFloatingTextStyle( text )">
-							@text.Text
-						</div>
-					}
+					<button class="get-a-job-button can-afford" onclick="@ClickMoney">
+						Get a Job
+					</button>
 				</div>
 			</div>
 
@@ -196,6 +216,29 @@
 				}
 			</div>
 		</div>
+
+	<div class="panel fuel-panel">
+		<h2>Fuel</h2>
+
+		<div class="fuel-description">
+			Add fuel to increase the speed of your trains, increasing profits.
+		</div>
+
+		<div class="fuel-stats">
+			<div>Coal: @FormatNumber( Game?.Coal ?? 0 )</div>
+			<div>Coal miners: @(Game?.CoalMiners ?? 0)</div>
+			<div>Coal production: @FormatNumber( Game?.CoalPerSecond ?? 0 ) / sec</div>
+			<div>Income multiplier: x @FormatNumber( Game?.CoalIncomeMultiplier ?? 1 )</div>
+		</div>
+
+		@if ( Game is not null )
+		{
+			<button class="@GetButtonClass( Game.CanBuyCoalMiner() )" onclick="@BuyCoalMiner" disabled="@(!Game.CanBuyCoalMiner())">
+				Buy Coal Miner - $@FormatNumber( Game.CoalMinerCost )
+			</button>
+		}
+	</div>
+	</div>
 		@if ( Game is not null && Game.ShowOfflinePopup )
 			{
 				<div class="popup-backdrop">
@@ -259,6 +302,12 @@
 	void BuyTrainCar()
 	{
 		Game?.BuyTrainCar();
+		StateHasChanged();
+	}
+
+	void BuyCoalMiner()
+	{
+		Game?.BuyCoalMiner();
 		StateHasChanged();
 	}
 
@@ -329,6 +378,18 @@
 			animationFrame
 		);
 
+		int fuelHash = System.HashCode.Combine(
+			Game?.Coal ?? 0,
+			Game?.CoalMiners ?? 0,
+			Game?.CoalPerSecond ?? 0,
+			Game?.CoalIncomeMultiplier ?? 1
+		);
+
+		int extraHash = System.HashCode.Combine(
+			animationHash,
+			fuelHash
+		);
+
 		return System.HashCode.Combine(
 			Game?.Money ?? 0,
 			Game?.Trains ?? 0,
@@ -337,7 +398,7 @@
 			Game?.ShowOfflinePopup ?? false,
 			Game?.LastOfflineMoneyEarned ?? 0,
 			Game?.LastOfflineSeconds ?? 0,
-			animationHash
+			extraHash
 		);
 	}
 }

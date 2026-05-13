@@ -12,15 +12,22 @@ public sealed class Logic : Component
 	[Property] public double Money { get; set; } = 25;
 	[Property] public int Trains { get; set; } = 0;
 	[Property] public int TrainCars { get; set; } = 0;
+	[Property] public double Coal { get; set; } = 0;
+	[Property] public int CoalMiners { get; set; } = 0;
 
 	[Property] public double LastOfflineMoneyEarned { get; set; } = 0;
 	[Property] public double LastOfflineSeconds { get; set; } = 0;
 	[Property] public bool ShowOfflinePopup { get; set; } = false;
 
-	public double MoneyPerSecond => TrainCars * 1.0;
+	public double CoalPerSecond => CoalMiners * 1.0;
+
+	public double CoalIncomeMultiplier => 1 + Math.Log10( Coal + 1 ) * 0.5;
+
+	public double MoneyPerSecond => TrainCars * 1.0 * CoalIncomeMultiplier;
 
 	public double TrainCost => 25;
 	public double TrainCarCost => 10 * Math.Pow( 1.15, TrainCars );
+	public double CoalMinerCost => 200 * Math.Pow( 1.5, CoalMiners );
 
 	protected override void OnStart()
 	{
@@ -31,6 +38,7 @@ public sealed class Logic : Component
 	protected override void OnUpdate()
 	{
 		Money += MoneyPerSecond * Time.Delta;
+		Coal += CoalPerSecond * Time.Delta;
 
 		if ( NextAutoSave )
 		{
@@ -77,6 +85,20 @@ public sealed class Logic : Component
 		TrainCars++;
 	}
 
+	public bool CanBuyCoalMiner()
+	{
+		return Money >= CoalMinerCost;
+	}
+
+	public void BuyCoalMiner()
+	{
+		if ( !CanBuyCoalMiner() )
+			return;
+
+		Money -= CoalMinerCost;
+		CoalMiners++;
+	}
+
 	public void CloseOfflinePopup()
 	{
 		ShowOfflinePopup = false;
@@ -89,6 +111,8 @@ public sealed class Logic : Component
 			Money = Money,
 			Trains = Trains,
 			TrainCars = TrainCars,
+			Coal = Coal,
+			CoalMiners = CoalMiners,
 			LastSaveTimeMs = GetCurrentUnixTimeMs()
 		};
 
@@ -108,6 +132,8 @@ public sealed class Logic : Component
 		Money = data.Money;
 		Trains = data.Trains;
 		TrainCars = data.TrainCars;
+		Coal = data.Coal;
+		CoalMiners = data.CoalMiners;
 
 		ApplyOfflineProgress( data );
 	}
@@ -127,8 +153,10 @@ public sealed class Logic : Component
 
 		offlineSeconds = Math.Min( offlineSeconds, MaxOfflineSeconds );
 
-		double offlineMoney = offlineSeconds * MoneyPerSecond;
+		double offlineCoal = offlineSeconds * CoalPerSecond;
+		Coal += offlineCoal;
 
+		double offlineMoney = offlineSeconds * MoneyPerSecond;
 		Money += offlineMoney;
 
 		LastOfflineMoneyEarned = offlineMoney;
