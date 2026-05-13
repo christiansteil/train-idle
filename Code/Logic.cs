@@ -3,9 +3,16 @@ using Sandbox;
 
 public sealed class Logic : Component
 {
+	private const string SaveFile = "save.json";
+	private const float AutoSaveInterval = 15f;
+	private const double MaxOfflineSeconds = 60 * 60 * 24;
+
+	private TimeUntil NextAutoSave;
+
 	[Property] public double Money { get; set; } = 25;
 	[Property] public int Trains { get; set; } = 0;
 	[Property] public int TrainCars { get; set; } = 0;
+
 	[Property] public double LastOfflineMoneyEarned { get; set; } = 0;
 	[Property] public double LastOfflineSeconds { get; set; } = 0;
 	[Property] public bool ShowOfflinePopup { get; set; } = false;
@@ -15,13 +22,10 @@ public sealed class Logic : Component
 	public double TrainCost => 25;
 	public double TrainCarCost => 10 * Math.Pow( 1.15, TrainCars );
 
-	private const string SaveFile = "save.json";
-	private TimeUntil NextAutoSave;
-
 	protected override void OnStart()
 	{
 		LoadGame();
-		NextAutoSave = 15f;
+		NextAutoSave = AutoSaveInterval;
 	}
 
 	protected override void OnUpdate()
@@ -31,7 +35,7 @@ public sealed class Logic : Component
 		if ( NextAutoSave )
 		{
 			SaveGame();
-			NextAutoSave = 15f;
+			NextAutoSave = AutoSaveInterval;
 		}
 	}
 
@@ -78,20 +82,20 @@ public sealed class Logic : Component
 		ShowOfflinePopup = false;
 	}
 
-	public void SaveGame()
+	private void SaveGame()
 	{
 		var data = new SaveData
 		{
 			Money = Money,
 			Trains = Trains,
 			TrainCars = TrainCars,
-			LastSaveTime = GetCurrentUnixTime()
+			LastSaveTimeMs = GetCurrentUnixTimeMs()
 		};
 
 		FileSystem.Data.WriteJson( SaveFile, data );
 	}
 
-	public void LoadGame()
+	private void LoadGame()
 	{
 		if ( !FileSystem.Data.FileExists( SaveFile ) )
 			return;
@@ -105,16 +109,26 @@ public sealed class Logic : Component
 		Trains = data.Trains;
 		TrainCars = data.TrainCars;
 
-		double now = GetCurrentUnixTime();
-		double offlineSeconds = now - data.LastSaveTime;
+		ApplyOfflineProgress( data );
+	}
+
+	private void ApplyOfflineProgress( SaveData data )
+	{
+		long lastSaveTimeMs = data.GetLastSaveTimeMs();
+
+		if ( lastSaveTimeMs <= 0 )
+			return;
+
+		long nowMs = GetCurrentUnixTimeMs();
+		double offlineSeconds = (nowMs - lastSaveTimeMs) / 1000.0;
 
 		if ( offlineSeconds < 0 )
 			offlineSeconds = 0;
 
-		double maxOfflineSeconds = 60 * 60 * 24;
-		offlineSeconds = Math.Min( offlineSeconds, maxOfflineSeconds );
+		offlineSeconds = Math.Min( offlineSeconds, MaxOfflineSeconds );
 
 		double offlineMoney = offlineSeconds * MoneyPerSecond;
+
 		Money += offlineMoney;
 
 		LastOfflineMoneyEarned = offlineMoney;
@@ -122,17 +136,8 @@ public sealed class Logic : Component
 		ShowOfflinePopup = offlineMoney > 0;
 	}
 
-	private long GetCurrentUnixTime()
+	private long GetCurrentUnixTimeMs()
 	{
-		return DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 	}
-}
-
-public sealed class SaveData
-{
-	public double Money { get; set; }
-	public int Trains { get; set; }
-	public int TrainCars { get; set; }
-
-	public long LastSaveTime { get; set; }
 }
