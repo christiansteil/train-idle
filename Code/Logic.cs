@@ -15,6 +15,8 @@ public sealed class Logic : Component
 	[Property] public double Coal { get; set; } = 0;
 	[Property] public int CoalMiners { get; set; } = 0;
 
+	[Property] public float RouteProgress { get; set; } = 0f;
+
 	[Property] public double LastOfflineMoneyEarned { get; set; } = 0;
 	[Property] public double LastOfflineSeconds { get; set; } = 0;
 	[Property] public bool ShowOfflinePopup { get; set; } = false;
@@ -29,6 +31,8 @@ public sealed class Logic : Component
 	public double TrainCarCost => 10 * Math.Pow( 1.15, TrainCars );
 	public double CoalMinerCost => 200 * Math.Pow( 1.5, CoalMiners );
 
+	public float VisualTrainSpeed => (float)(0.08 * CoalIncomeMultiplier);
+
 	protected override void OnStart()
 	{
 		LoadGame();
@@ -39,6 +43,8 @@ public sealed class Logic : Component
 	{
 		Money += MoneyPerSecond * Time.Delta;
 		Coal += CoalPerSecond * Time.Delta;
+
+		UpdateRouteVisual();
 
 		if ( NextAutoSave )
 		{
@@ -102,6 +108,19 @@ public sealed class Logic : Component
 	public void CloseOfflinePopup()
 	{
 		ShowOfflinePopup = false;
+	}
+
+	private void UpdateRouteVisual()
+	{
+		if ( Trains <= 0 )
+		return;
+
+		RouteProgress += VisualTrainSpeed * Time.Delta;
+
+		if ( RouteProgress >= 1f)
+		{
+			RouteProgress -= 1f;
+		}
 	}
 
 	private void SaveGame()

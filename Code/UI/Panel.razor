@@ -3,7 +3,7 @@
 @using System.Collections.Generic;
 @using System.Linq;
 @using Sandbox.UI;
-@attribute [StyleSheet ( "Panel.razor.scss")]
+@attribute [StyleSheet( "Panel.razor.scss" )]
 @inherits PanelComponent
 
 <root>
@@ -92,8 +92,30 @@
 					<div class="panel routes-panel">
 						<h2>Routes</h2>
 
-						<div>
-							Route visualization will go here.
+						<div class="route-view">
+							@for ( int i = 0; i < RouteTrackPieceCount; i++ )
+							{
+								<div class="track-piece" style="@GetTrackPieceStyle( i )"></div>
+							}
+
+							<div class="station station-a">A</div>
+							<div class="station station-b">B</div>
+
+							@if ( Game is not null && Game.Trains > 0 )
+							{
+								<div class="route-piece train-engine" style="@GetRoutePieceStyle( 0, true )"></div>
+
+								@for ( int i = 1; i <= GetVisibleTrainCars(); i++ )
+								{
+									<div class="route-piece train-car" style="@GetRoutePieceStyle( i, false )"></div>
+								}
+							}
+						</div>
+
+						<div class="route-stats">
+							<div>Route: Loop Line</div>
+							<div>Train speed: x @FormatNumber( Game?.CoalIncomeMultiplier ?? 1 )</div>
+							<div>Visible cars: @GetVisibleTrainCars() / @(Game?.TrainCars ?? 0)</div>
 						</div>
 					</div>
 				</div>
@@ -130,36 +152,53 @@
 	private Logic Game;
 	private string CurrentTab = "Trains";
 
-	private List<FloatingText> FloatingTexts = new();
+	private readonly List<FloatingText> FloatingTexts = new();
 	private int NextFloatingTextId = 0;
 
 	private const float FloatingTextLifetime = 0.8f;
 
+	private const int RouteTrackPieceCount = 64;
+	private const int RouteSampleCount = 240;
+
+	private const float RouteCenterX = 520f;
+	private const float RouteCenterY = 260f;
+	private const float RouteRadiusX = 420f;
+	private const float RouteRadiusY = 190f;
+
+	private float[] CachedEvenRouteProgresses;
+	private float[] CachedRouteDistances;
+	private float CachedRouteTotalDistance;
+
 	class FloatingText
 	{
 		public int Id { get; set; }
-		public string Text { get; set; }
+		public string Text { get; set; } = "";
 		public TimeSince Age { get; set; }
 		public Vector2 Position { get; set; }
 	}
 
-	string GetFloatingTextStyle( FloatingText text )
+	struct RoutePoint
 	{
-		float age = text.Age;
-		float progress = Math.Clamp( age / FloatingTextLifetime, 0f, 1f );
-
-		float y = -40f * progress;
-		float opacity = 1f - progress;
-
-		float x = text.Position.x / 1.63f;
-		float startY = text.Position.y / 7.5f;
-
-		return $"left: {x}px; top: {startY}px; transform: translate(-50%, -50%) translateY({y}px); opacity: {opacity};";
+		public float X;
+		public float Y;
+		public float Rotation;
 	}
 
 	protected override void OnStart()
 	{
 		Game = Scene.GetAllComponents<Logic>().FirstOrDefault();
+		BuildRouteCache();
+	}
+
+	void SetTab( string tab )
+	{
+		CurrentTab = tab;
+		StateHasChanged();
+	}
+
+	string GetTabClass( string tab )
+	{
+		return CurrentTab == tab ? "active-tab" : "";
 	}
 
 	void BuyTrain()
@@ -204,6 +243,184 @@
 		StateHasChanged();
 	}
 
+	string GetButtonClass( bool canBuy )
+	{
+		return canBuy ? "can-afford" : "cant-afford";
+	}
+
+	string GetFloatingTextStyle( FloatingText text )
+	{
+		float age = text.Age;
+		float progress = Math.Clamp( age / FloatingTextLifetime, 0f, 1f );
+
+		float y = -40f * progress;
+		float opacity = 1f - progress;
+
+		float x = text.Position.x / 1.63f;
+		float startY = text.Position.y / 7.5f;
+
+		return $"left: {x}px; top: {startY}px; transform: translate(-50%, -50%) translateY({y}px); opacity: {opacity};";
+	}
+
+	int GetVisibleTrainCars()
+	{
+		if ( Game is null )
+			return 0;
+
+		return Math.Min( Game.TrainCars, 35 );
+	}
+
+	float GetTrainPieceScale()
+	{
+		int visibleCars = GetVisibleTrainCars();
+
+		if ( visibleCars <= 10 )
+			return 1.0f;
+
+		if ( visibleCars <= 25 )
+			return 0.75f;
+
+		return 0.55f;
+	}
+
+	Vector2 GetRoutePositionOnly( float progress )
+	{
+		progress = progress - MathF.Floor( progress );
+
+		float angle = progress * MathF.PI * 2f;
+
+		float x = RouteCenterX + MathF.Cos( angle ) * RouteRadiusX;
+		float y = RouteCenterY + MathF.Sin( angle ) * RouteRadiusY;
+
+		return new Vector2( x, y );
+	}
+
+	RoutePoint GetRoutePoint( float progress )
+	{
+		progress = progress - MathF.Floor( progress );
+
+		float angle = progress * MathF.PI * 2f;
+
+		float x = RouteCenterX + MathF.Cos( angle ) * RouteRadiusX;
+		float y = RouteCenterY + MathF.Sin( angle ) * RouteRadiusY;
+
+		float dx = -MathF.Sin( angle ) * RouteRadiusX;
+		float dy = MathF.Cos( angle ) * RouteRadiusY;
+
+		float rotation = MathF.Atan2( dy, dx ) * 180f / MathF.PI;
+
+		return new RoutePoint
+		{
+			X = x,
+			Y = y,
+			Rotation = rotation
+		};
+	}
+
+	void BuildRouteCache()
+	{
+		CachedRouteDistances = new float[RouteSampleCount + 1];
+		CachedEvenRouteProgresses = new float[RouteTrackPieceCount];
+
+		float totalDistance = 0f;
+		Vector2 previousPoint = GetRoutePositionOnly( 0f );
+
+		CachedRouteDistances[0] = 0f;
+
+		for ( int i = 1; i <= RouteSampleCount; i++ )
+		{
+			float progress = i / (float)RouteSampleCount;
+			Vector2 point = GetRoutePositionOnly( progress );
+
+			totalDistance += Vector2.DistanceBetween( previousPoint, point );
+			CachedRouteDistances[i] = totalDistance;
+
+			previousPoint = point;
+		}
+
+		CachedRouteTotalDistance = totalDistance;
+
+		for ( int i = 0; i < RouteTrackPieceCount; i++ )
+		{
+			float distanceProgress = i / (float)RouteTrackPieceCount;
+			CachedEvenRouteProgresses[i] = GetEvenRouteProgressFromCache( distanceProgress );
+		}
+	}
+
+	float GetEvenRouteProgressWrapped( float distanceProgress )
+	{
+		distanceProgress = distanceProgress - MathF.Floor( distanceProgress );
+		return GetEvenRouteProgressFromCache( distanceProgress );
+	}
+
+	float GetEvenRouteProgressFromCache( float distanceProgress )
+	{
+		if ( CachedRouteDistances is null || CachedRouteDistances.Length == 0 )
+			BuildRouteCache();
+
+		distanceProgress = distanceProgress - MathF.Floor( distanceProgress );
+
+		float targetDistance = distanceProgress * CachedRouteTotalDistance;
+
+		for ( int i = 1; i <= RouteSampleCount; i++ )
+		{
+			if ( CachedRouteDistances[i] < targetDistance )
+				continue;
+
+			float previousDistance = CachedRouteDistances[i - 1];
+			float nextDistance = CachedRouteDistances[i];
+
+			float segmentPercent = 0f;
+
+			if ( nextDistance > previousDistance )
+				segmentPercent = (targetDistance - previousDistance) / (nextDistance - previousDistance);
+
+			float previousProgress = (i - 1) / (float)RouteSampleCount;
+			float nextProgress = i / (float)RouteSampleCount;
+
+			return previousProgress + (nextProgress - previousProgress) * segmentPercent;
+		}
+
+		return 0f;
+	}
+
+	string GetTrackPieceStyle( int index )
+	{
+		if ( CachedEvenRouteProgresses is null || CachedEvenRouteProgresses.Length == 0 )
+			BuildRouteCache();
+
+		float progress = CachedEvenRouteProgresses[index];
+		RoutePoint point = GetRoutePoint( progress );
+
+		return $"left: {point.X}px; top: {point.Y}px; transform: translate(-50%, -50%) rotate({point.Rotation}deg);";
+	}
+
+	string GetRoutePieceStyle( int index, bool isEngine )
+	{
+		if ( Game is null )
+			return "";
+
+		float scale = GetTrainPieceScale();
+
+		float spacing = 0.018f;
+
+		if ( scale < 1.0f )
+			spacing *= scale;
+
+		float distanceProgress = Game.RouteProgress - index * spacing;
+		float routeProgress = GetEvenRouteProgressWrapped( distanceProgress );
+
+		RoutePoint point = GetRoutePoint( routeProgress );
+
+		float width = isEngine ? 38f : 28f;
+		float height = isEngine ? 26f : 20f;
+
+		width *= scale;
+		height *= scale;
+
+		return $"left: {point.X}px; top: {point.Y}px; width: {width}px; height: {height}px; transform: translate(-50%, -50%) rotate({point.Rotation}deg);";
+	}
+
 	string FormatTime( double seconds )
 	{
 		int totalSeconds = (int)Math.Floor( seconds );
@@ -229,28 +446,14 @@
 		return number.ToString( "0.0" );
 	}
 
-	string GetButtonClass( bool canBuy )
-	{
-	return canBuy ? "can-afford" : "cant-afford";
-	}
-
-	void SetTab( string tab )
-	{
-		CurrentTab = tab;
-		StateHasChanged();
-	}
-
-	string GetTabClass( string tab )
-	{
-		return CurrentTab == tab ? "active-tab" : "";
-	}
-
 	protected override int BuildHash()
 	{
 		FloatingTexts.RemoveAll( text => text.Age > FloatingTextLifetime );
 
-		int animationFrame = FloatingTexts.Count > 0
-			? (int)(RealTime.Now * 60)
+		bool shouldAnimate = FloatingTexts.Count > 0 || CurrentTab == "Routes";
+
+		int animationFrame = shouldAnimate
+			? (int)(RealTime.Now * 30)
 			: 0;
 
 		int animationHash = System.HashCode.Combine(
@@ -267,10 +470,15 @@
 
 		int tabHash = CurrentTab.GetHashCode();
 
+		int routeHash = System.HashCode.Combine(
+			Game?.TrainCars ?? 0
+		);
+
 		int extraHash = System.HashCode.Combine(
 			animationHash,
 			fuelHash,
-			tabHash
+			tabHash,
+			routeHash
 		);
 
 		return System.HashCode.Combine(

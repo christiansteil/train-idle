@@ -204,3 +204,75 @@ button {
 .routes-panel {
     flex-grow: 1;
 }
+
+.route-view {
+	position: relative;
+	width: 100%;
+	min-width: 1040px;
+	height: 520px;
+	background-color: #1a1a1a;
+	border-radius: 16px;
+	margin-top: 16px;
+	overflow: hidden;
+}
+
+.track-piece {
+	position: absolute;
+	width: 22px;
+	height: 8px;
+	background-color: #555;
+	border-radius: 4px;
+	pointer-events: none;
+}
+
+.route-piece {
+	position: absolute;
+	border-radius: 5px;
+	pointer-events: none;
+}
+
+.station {
+	position: absolute;
+	width: 64px;
+	height: 64px;
+	background-color: #666;
+	border-radius: 12px;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 26px;
+}
+
+.station-a {
+	left: 150px;
+	top: 260px;
+	transform: translate(-50%, -50%);
+}
+
+.station-b {
+	left: 890px;
+	top: 260px;
+	transform: translate(-50%, -50%);
+}
+
+.route-piece {
+	position: absolute;
+	border-radius: 5px;
+	pointer-events: none;
+}
+
+.train-engine {
+	background-color: #d4903d;
+}
+
+.train-car {
+	background-color: #4a9;
+}
+
+.route-stats {
+	margin-top: 24px;
+	flex-direction: column;
+	gap: 8px;
+	font-size: 22px;
+	color: #cccccc;
+}
