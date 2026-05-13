@@ -33,6 +33,8 @@
     font-weight: bold;
 }
 
+// Trains page
+
 .main {
     flex-grow: 1;
     width: 100%;
@@ -172,6 +174,8 @@ button {
     height: 100%;
 }
 
+// Side Menu
+
 .side-menu {
     width: 180px;
     background-color: #181818;
@@ -200,6 +204,8 @@ button {
 .menu-button.active-tab {
     background-color: #555;
 }
+
+// Routes page
 
 .routes-panel {
     flex-grow: 1;
@@ -275,4 +281,67 @@ button {
 	gap: 8px;
 	font-size: 22px;
 	color: #cccccc;
+}
+
+// Stats page
+
+.stats-panel {
+	flex-grow: 1;
+}
+
+.stats-section {
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 28px;
+}
+
+.stats-section h3 {
+	font-size: 30px;
+	margin-bottom: 4px;
+	color: #dddddd;
+}
+
+.equation-row {
+	flex-direction: row;
+	align-items: center;
+	gap: 10px;
+	font-size: 24px;
+	flex-wrap: wrap;
+}
+
+.equation-term {
+	position: relative;
+	background-color: #333;
+	padding: 4px 10px;
+	border-radius: 6px;
+	color: white;
+}
+
+.equation-term:hover {
+	background-color: #444;
+}
+
+.equation-result {
+	color: #ffffff;
+	font-weight: bold;
+	margin-left: 8px;
+}
+
+.tooltip {
+	position: absolute;
+	left: 50%;
+	bottom: 120%;
+	transform: translateX(-50%);
+	background-color: #050505;
+	color: white;
+	font-size: 18px;
+	padding: 8px 12px;
+	border-radius: 6px;
+	opacity: 0;
+	pointer-events: none;
+	white-space: nowrap;
+}
+
+.equation-term:hover .tooltip {
+	opacity: 1;
 }

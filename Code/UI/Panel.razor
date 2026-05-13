@@ -26,6 +26,10 @@
 				<button class="menu-button @GetTabClass( "Routes" )" onclick="@(() => SetTab( "Routes" ))">
 					Routes
 				</button>
+
+				<button class="menu-button @GetTabClass( "Stats" )" onclick="@(() => SetTab( "Stats" ))">
+					Stats
+				</button>
 			</div>
 
 			@if ( CurrentTab == "Trains" )
@@ -74,7 +78,7 @@
 							<div>Coal: @FormatNumber( Game?.Coal ?? 0 )</div>
 							<div>Coal miners: @(Game?.CoalMiners ?? 0)</div>
 							<div>Coal production: @FormatNumber( Game?.CoalPerSecond ?? 0 ) / sec</div>
-							<div>Train speed: x @FormatNumber( Game?.CoalIncomeMultiplier ?? 1 )</div>
+							<div>Train speed: @($"x{FormatNumber( Game?.CoalIncomeMultiplier ?? 0 )}")</div>
 						</div>
 
 						@if ( Game is not null )
@@ -114,8 +118,131 @@
 
 						<div class="route-stats">
 							<div>Route: Loop Line</div>
-							<div>Train speed: x @FormatNumber( Game?.CoalIncomeMultiplier ?? 1 )</div>
+							<div>Train speed: @($"x{FormatNumber( Game?.CoalIncomeMultiplier ?? 0 )}")</div>
 							<div>Visible cars: @GetVisibleTrainCars() / @(Game?.TrainCars ?? 0)</div>
+						</div>
+					</div>
+				</div>
+			}
+			else if ( CurrentTab == "Stats" )
+			{
+				<div class="main">
+					<div class="panel stats-panel">
+						<h2>Stats</h2>
+
+						<div class="stats-section">
+							<h3>Money Income</h3>
+
+							<div class="equation-row">
+								<div>Money per second =</div>
+
+								<div class="equation-term">
+									@FormatNumber( Game?.TrainCars ?? 0 )
+									<div class="tooltip"># train cars</div>
+								</div>
+
+								<div class="equation-symbol">*</div>
+
+								<div class="equation-term">
+									@FormatNumber( GetTrainCarIncome() )
+									<div class="tooltip">money per train car</div>
+								</div>
+
+								<div class="equation-symbol">*</div>
+
+								<div class="equation-term">
+									@FormatNumber( Game?.CoalIncomeMultiplier ?? 1 )
+									<div class="tooltip">train speed from coal</div>
+								</div>
+
+								<div class="equation-symbol">=</div>
+
+								<div class="equation-result">
+									@($"${FormatNumber( Game?.MoneyPerSecond ?? 0 )} / sec")
+								</div>
+							</div>
+						</div>
+
+						<div class="stats-section">
+							<h3>Train Speed</h3>
+
+							<div class="equation-row">
+								<div>Train speed =</div>
+
+								<div class="equation-symbol">1 + log10(</div>
+
+								<div class="equation-term">
+									@FormatNumber( Game?.Coal ?? 0 )
+									<div class="tooltip">coal</div>
+								</div>
+
+								<div class="equation-symbol">+ 1) *</div>
+
+								<div class="equation-term">
+									@FormatNumber( GetCoalSpeedStrength() )
+									<div class="tooltip">coal speed strength</div>
+								</div>
+
+								<div class="equation-symbol">=</div>
+
+								<div class="equation-result">
+									@($"x{FormatNumber( Game?.CoalIncomeMultiplier ?? 1 )}")
+								</div>
+							</div>
+						</div>
+
+						<div class="stats-section">
+							<h3>Coal Income</h3>
+
+							<div class="equation-row">
+								<div>Coal per second =</div>
+
+								<div class="equation-term">
+									@FormatNumber( Game?.CoalMiners ?? 0 )
+									<div class="tooltip"># coal miners</div>
+								</div>
+
+								<div class="equation-symbol">*</div>
+
+								<div class="equation-term">
+									@FormatNumber( GetCoalMinerIncome() )
+									<div class="tooltip">coal per miner</div>
+								</div>
+
+								<div class="equation-symbol">=</div>
+
+								<div class="equation-result">
+									@($"{FormatNumber( Game?.CoalPerSecond ?? 0 )} coal / sec")
+								</div>
+							</div>
+						</div>
+
+						<div class="stats-section">
+							<h3>Resources</h3>
+
+							<div class="equation-row">
+								<div>Total coal =</div>
+
+								<div class="equation-result">
+									@FormatNumber( Game?.Coal ?? 0 )
+								</div>
+							</div>
+
+							<div class="equation-row">
+								<div>Total train cars =</div>
+
+								<div class="equation-result">
+									@FormatNumber( Game?.TrainCars ?? 0 )
+								</div>
+							</div>
+
+							<div class="equation-row">
+								<div>Total coal miners =</div>
+
+								<div class="equation-result">
+									@FormatNumber( Game?.CoalMiners ?? 0 )
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -267,7 +394,7 @@
 		if ( Game is null )
 			return 0;
 
-		return Math.Min( Game.TrainCars, 35 );
+		return Game.TrainCars;
 	}
 
 	float GetTrainPieceScale()
@@ -281,6 +408,21 @@
 			return 0.75f;
 
 		return 0.55f;
+	}
+
+	double GetTrainCarIncome()
+	{
+		return 1.0;
+	}
+
+	double GetCoalMinerIncome()
+	{
+		return 1.0;
+	}
+
+	double GetCoalSpeedStrength()
+	{
+		return 0.5;
 	}
 
 	Vector2 GetRoutePositionOnly( float progress )
