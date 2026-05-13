@@ -1,4 +1,7 @@
 @using Sandbox;
+@using System;
+@using System.Collections.Generic;
+@using System.Linq;
 @using Sandbox.UI;
 @inherits PanelComponent
 
@@ -11,6 +14,7 @@
 		font-size: 24px;
 		flex-direction: column;
 		pointer-events: all;
+		position: relative;
 	}
 
 	.top-bar {
@@ -101,6 +105,48 @@
 	.cant-afford {
 		opacity: 0.4;
 	}
+	.popup-backdrop {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba( 0, 0, 0, 0.7 );
+		align-items: center;
+		justify-content: center;
+		pointer-events: all;
+	}
+
+	.popup-window {
+		width: 520px;
+		background-color: #222;
+		border-radius: 16px;
+		padding: 32px;
+		flex-direction: column;
+		gap: 20px;
+		align-items: center;
+	}
+
+	.popup-window h2 {
+		font-size: 42px;
+		margin-bottom: 8px;
+	}
+
+	.job-button-area {
+		position: relative;
+		width: 160px;
+		height: 100px;
+	}
+
+	.floating-money {
+		position: absolute;
+		left: 58px;
+		top: 0px;
+		font-size: 28px;
+		font-weight: bold;
+		color: white;
+		pointer-events: none;
+	}
 </style>
 
 <root>
@@ -121,7 +167,16 @@
 					<div>Train Cars: @(Game?.TrainCars ?? 0)</div>
 				</div>
 
-				<button class="get-a-job-button can-afford" onclick="@ClickMoney">Get a Job</button>
+				<div class="job-button-area">
+					<button class="get-a-job-button can-afford" onclick="@ClickMoney">Get a Job</button>
+
+					@foreach ( var text in FloatingTexts )
+					{
+						<div class="floating-money" style="@GetFloatingTextStyle( text )">
+							@text.Text
+						</div>
+					}
+				</div>
 			</div>
 
 			<div class="panel shop-panel">
@@ -141,12 +196,54 @@
 				}
 			</div>
 		</div>
+		@if ( Game is not null && Game.ShowOfflinePopup )
+			{
+				<div class="popup-backdrop">
+					<div class="popup-window">
+						<h2>Welcome Back!</h2>
+
+						<div>@($"You were offline for {FormatTime( Game.LastOfflineSeconds )}.")</div>
+						<div>@($"You earned ${FormatNumber( Game.LastOfflineMoneyEarned )}.")</div>
+
+						<button class="can-afford" onclick="@CloseOfflinePopup">
+							Close
+						</button>
+					</div>
+				</div>
+			}
 	</div>
 </root>
 
 @code
 {
 	private Logic Game;
+
+	private List<FloatingText> FloatingTexts = new();
+	private int NextFloatingTextId = 0;
+
+	private const float FloatingTextLifetime = 0.8f;
+
+	class FloatingText
+	{
+		public int Id { get; set; }
+		public string Text { get; set; }
+		public TimeSince Age { get; set; }
+		public Vector2 Position { get; set; }
+	}
+
+	string GetFloatingTextStyle( FloatingText text )
+	{
+		float age = text.Age;
+		float progress = Math.Clamp( age / FloatingTextLifetime, 0f, 1f );
+
+		float y = -40f * progress;
+		float opacity = 1f - progress;
+
+		float x = text.Position.x / 1.63f;
+		float startY = text.Position.y / 7.5f;
+
+		return $"left: {x}px; top: {startY}px; transform: translate(-50%, -50%) translateY({y}px); opacity: {opacity};";
+	}
 
 	protected override void OnStart()
 	{
@@ -167,8 +264,46 @@
 
 	void ClickMoney()
 	{
-		Game.Money++;
+		if ( Game is null )
+			return;
+
+		Game.ClickMoney();
+
+		FloatingTexts.Add( new FloatingText
+		{
+			Id = NextFloatingTextId++,
+			Text = "+1",
+			Age = 0,
+			Position = Mouse.Position
+		} );
+
 		StateHasChanged();
+	}
+
+	void CloseOfflinePopup()
+	{
+		Game?.CloseOfflinePopup();
+		StateHasChanged();
+	}
+
+	string FormatTime( double seconds )
+	{
+		int totalSeconds = (int)Math.Floor( seconds );
+
+		int hours = totalSeconds / 3600;
+		int minutes = (totalSeconds % 3600) / 60;
+		int secs = totalSeconds % 60;
+
+		if ( hours > 0 )
+			return $"{hours}h {minutes}m {secs}s";
+
+		if ( minutes > 0 )
+			return $"{minutes}m {secs}s";
+
+		if ( seconds < 10 )
+			return $"{seconds:0.0}s";
+
+		return $"{secs}s";
 	}
 
 	string FormatNumber( double number )
@@ -183,11 +318,26 @@
 
 	protected override int BuildHash()
 	{
+		FloatingTexts.RemoveAll( text => text.Age > FloatingTextLifetime );
+
+		int animationFrame = FloatingTexts.Count > 0
+			? (int)(RealTime.Now * 60)
+			: 0;
+
+		int animationHash = System.HashCode.Combine(
+			FloatingTexts.Count,
+			animationFrame
+		);
+
 		return System.HashCode.Combine(
 			Game?.Money ?? 0,
 			Game?.Trains ?? 0,
 			Game?.TrainCars ?? 0,
-			Game?.MoneyPerSecond ?? 0
+			Game?.MoneyPerSecond ?? 0,
+			Game?.ShowOfflinePopup ?? false,
+			Game?.LastOfflineMoneyEarned ?? 0,
+			Game?.LastOfflineSeconds ?? 0,
+			animationHash
 		);
 	}
 }
