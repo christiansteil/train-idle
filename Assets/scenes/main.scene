@@ -2,11 +2,11 @@
   "__guid": "6962f49c-bbdf-4308-a9cc-e5de08999281",
   "GameObjects": [
     {
-      "__guid": "081e7a27-4a3c-436a-be4d-721c104b0dd5",
+      "__guid": "a6ba4d82-27f7-4776-8930-b083c1117b6d",
       "__version": 2,
       "Flags": 0,
-      "Name": "Object",
-      "Position": "278.396576,278.396606,-393.712341",
+      "Name": "Screen",
+      "Position": "0,0,0",
       "Rotation": "0,0,0,1",
       "Scale": "1,1,1",
       "Tags": "",
@@ -18,23 +18,114 @@
       "OwnerTransfer": 1,
       "Components": [
         {
-          "__type": "Sandbox.panel",
-          "__guid": "c5dbe68b-5f85-4ebb-b72d-d4afad704b78",
+          "__type": "Sandbox.ScreenPanel",
+          "__guid": "8c6b1fdd-114c-4030-892e-d21b61c5a44b",
           "__enabled": true,
           "Flags": 0,
-          "MyStringValue": "Hello World!",
+          "AutoScreenScale": true,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "Opacity": 1,
+          "Scale": 1,
+          "ScaleStrategy": "ConsistentHeight",
+          "TargetCamera": {
+            "_type": "component",
+            "component_id": "3897aba4-f596-4cf1-96ce-86014c70cc4d",
+            "go": "0b67f35c-d017-47fe-8336-1999003a8803",
+            "component_type": "CameraComponent"
+          },
+          "ZIndex": 100
+        },
+        {
+          "__type": "Sandbox.panel",
+          "__guid": "aa07dfe4-976b-4fba-b15b-f3c9ad2f2f1f",
+          "__enabled": true,
+          "Flags": 0,
           "OnComponentDestroy": null,
           "OnComponentDisabled": null,
           "OnComponentEnabled": null,
           "OnComponentFixedUpdate": null,
           "OnComponentStart": null,
           "OnComponentUpdate": null
-        },
+        }
+      ],
+      "Children": []
+    },
+    {
+      "__guid": "0b67f35c-d017-47fe-8336-1999003a8803",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "Camera",
+      "Position": "0,0,0",
+      "Rotation": "0,0,0,1",
+      "Scale": "1,1,1",
+      "Tags": "maincamera",
+      "Enabled": true,
+      "NetworkMode": 2,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [
         {
-          "__type": "UI",
-          "__guid": "de6ea939-d42b-470b-9585-eb5352e5f87e",
+          "__type": "Sandbox.CameraComponent",
+          "__guid": "3897aba4-f596-4cf1-96ce-86014c70cc4d",
           "__enabled": true,
           "Flags": 0,
+          "BackgroundColor": "0.33333,0.46275,0.52157,1",
+          "ClearFlags": "All",
+          "EnablePostProcessing": true,
+          "FieldOfView": 60,
+          "FovAxis": "Horizontal",
+          "IsMainCamera": true,
+          "OnComponentDestroy": null,
+          "OnComponentDisabled": null,
+          "OnComponentEnabled": null,
+          "OnComponentFixedUpdate": null,
+          "OnComponentStart": null,
+          "OnComponentUpdate": null,
+          "Orthographic": false,
+          "OrthographicHeight": 1204,
+          "PostProcessAnchor": null,
+          "Priority": 1,
+          "RenderExcludeTags": "",
+          "RenderTags": "",
+          "RenderTexture": null,
+          "TargetEye": "None",
+          "Viewport": "0,0,1,1",
+          "ZFar": 10000,
+          "ZNear": 10
+        }
+      ],
+      "Children": []
+    },
+    {
+      "__guid": "acf3a579-26d5-4991-810a-154331b53d98",
+      "__version": 2,
+      "Flags": 0,
+      "Name": "Game Manager",
+      "Position": "0,0,0",
+      "Rotation": "0,0,0,1",
+      "Scale": "1,1,1",
+      "Tags": "",
+      "Enabled": true,
+      "NetworkMode": 2,
+      "NetworkFlags": 0,
+      "NetworkOrphaned": 0,
+      "NetworkTransmit": true,
+      "OwnerTransfer": 1,
+      "Components": [
+        {
+          "__type": "Logic",
+          "__guid": "893358d9-8475-4b80-8888-a4805e83da98",
+          "__enabled": true,
+          "Flags": 0,
+          "Money": 0,
+          "MoneyPerSecond": 0,
           "OnComponentDestroy": null,
           "OnComponentDisabled": null,
           "OnComponentEnabled": null,
@@ -66,11 +157,6 @@
       "CustomBounds": false
     },
     "GameObjectSystems": {
-      "Sandbox.Clutter.ClutterGridSystem": {
-        "Storage": {
-          "$blob": "34bb9230-e85f-497a-bb99-b6879e85fd3a"
-        }
-      },
       "Sandbox.SelectionSetsSystem": {
         "Data": {
           "SelectionSets": []
