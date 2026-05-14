@@ -14,16 +14,15 @@ public sealed class Logic : Component
 	[Property] public int TrainCars { get; set; } = 0;
 	[Property] public double Coal { get; set; } = 0;
 	[Property] public int CoalMiners { get; set; } = 0;
-
 	[Property] public float RouteProgress { get; set; } = 0f;
+	[Property] public double Research { get; set; } = 0;
 
 	[Property] public double LastOfflineMoneyEarned { get; set; } = 0;
 	[Property] public double LastOfflineSeconds { get; set; } = 0;
 	[Property] public bool ShowOfflinePopup { get; set; } = false;
-
 	public double CoalPerSecond => CoalMiners * 1.0;
 
-	public double CoalIncomeMultiplier => 1 + Math.Log10( Coal + 1 ) * 0.5;
+	public double CoalIncomeMultiplier => 1000 + Math.Log10( Coal + 1 ) * 0.5;
 
 	public double MoneyPerSecond => TrainCars * 1.0 * CoalIncomeMultiplier;
 
@@ -32,6 +31,7 @@ public sealed class Logic : Component
 	public double CoalMinerCost => 200 * Math.Pow( 1.5, CoalMiners );
 
 	public float VisualTrainSpeed => (float)(0.08 * CoalIncomeMultiplier);
+	public double ResearchPerArrival => TrainCars * 1.0;
 
 	protected override void OnStart()
 	{
@@ -115,12 +115,41 @@ public sealed class Logic : Component
 		if ( Trains <= 0 )
 		return;
 
+		float previousProgress = RouteProgress;
+
 		RouteProgress += VisualTrainSpeed * Time.Delta;
 
 		if ( RouteProgress >= 1f)
 		{
 			RouteProgress -= 1f;
 		}
+
+		CheckResearchProgress( previousProgress, RouteProgress );
+	}
+
+	private void CheckResearchProgress( float previousProgress, float currentProgress )
+	{
+		if ( TrainCars <= 0 )
+			return;
+
+		const float pointBProgress = 0.5f;
+
+		bool crossedPointB;
+
+		if ( currentProgress >= previousProgress )
+		{
+			crossedPointB = previousProgress < pointBProgress && currentProgress >= pointBProgress;
+		}
+		else
+		{
+			// Handles wrapping from 0.99 back to 0.00.
+			crossedPointB = previousProgress < pointBProgress || currentProgress >= pointBProgress;
+		}
+
+		if ( !crossedPointB )
+			return;
+
+		Research += ResearchPerArrival;
 	}
 
 	private void SaveGame()
@@ -132,6 +161,7 @@ public sealed class Logic : Component
 			TrainCars = TrainCars,
 			Coal = Coal,
 			CoalMiners = CoalMiners,
+			Research = Research,
 			LastSaveTimeMs = GetCurrentUnixTimeMs()
 		};
 
@@ -153,6 +183,7 @@ public sealed class Logic : Component
 		TrainCars = data.TrainCars;
 		Coal = data.Coal;
 		CoalMiners = data.CoalMiners;
+		Research = Research;
 
 		ApplyOfflineProgress( data );
 	}

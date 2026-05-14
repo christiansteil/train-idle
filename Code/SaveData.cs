@@ -5,6 +5,7 @@ public sealed class SaveData
 	public int TrainCars { get; set; }
     public double Coal { get; set; }
 	public int CoalMiners { get; set; }
+	public double Research { get; set; }
 
 	public long LastSaveTimeMs { get; set; }
 

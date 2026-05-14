@@ -345,3 +345,28 @@ button {
 .equation-term:hover .tooltip {
 	opacity: 1;
 }
+
+// Research tab
+
+.research-panel {
+	flex-grow: 1;
+}
+
+.research-total {
+	font-size: 36px;
+	font-weight: bold;
+	margin-bottom: 16px;
+}
+
+.research-description {
+	font-size: 24px;
+	color: #cccccc;
+	margin-bottom: 24px;
+}
+
+.research-breakdown {
+	flex-direction: column;
+	gap: 10px;
+	font-size: 22px;
+	color: #dddddd;
+}

@@ -26,7 +26,9 @@
 				<button class="menu-button @GetTabClass( "Routes" )" onclick="@(() => SetTab( "Routes" ))">
 					Routes
 				</button>
-
+				<button class="menu-button @GetTabClass( "Research" )" onclick="@(() => SetTab( "Research" ))">
+					Research
+				</button>
 				<button class="menu-button @GetTabClass( "Stats" )" onclick="@(() => SetTab( "Stats" ))">
 					Stats
 				</button>
@@ -247,6 +249,119 @@
 					</div>
 				</div>
 			}
+			else if ( CurrentTab == "Research" )
+			{
+				<div class="main">
+					<div class="panel research-panel">
+						<h2>Research</h2>
+
+						<div class="research-total">
+							@($"Research: {FormatNumber( Game?.Research ?? 0 )}")
+						</div>
+
+						<div class="research-description">
+							Your train gains research whenever it reaches Point B on the route.
+						</div>
+
+						<div class="stats-section">
+							<h3>Research Income</h3>
+
+							<div class="equation-row">
+								<div>Research per second =</div>
+
+								<div class="equation-term">
+									@FormatNumber( GetArrivalsAtBPerSecond() )
+									<div class="tooltip">arrivals at Point B per second</div>
+								</div>
+
+								<div class="equation-symbol">*</div>
+
+								<div class="equation-term">
+									@FormatNumber( GetResearchPerArrivalAtB() )
+									<div class="tooltip">research gained per Point B arrival</div>
+								</div>
+
+								<div class="equation-symbol">=</div>
+
+								<div class="equation-result">
+									@($"{FormatNumber( GetResearchPerSecond() )} research / sec")
+								</div>
+							</div>
+						</div>
+
+						<div class="stats-section">
+							<h3>Research Per Arrival</h3>
+
+							<div class="equation-row">
+								<div>Research per Point B arrival =</div>
+
+								<div class="equation-term">
+									@FormatNumber( Game?.TrainCars ?? 0 )
+									<div class="tooltip"># train cars</div>
+								</div>
+
+								<div class="equation-symbol">*</div>
+
+								<div class="equation-term">
+									@FormatNumber( GetResearchPerTrainCar() )
+									<div class="tooltip">research per train car</div>
+								</div>
+
+								<div class="equation-symbol">=</div>
+
+								<div class="equation-result">
+									@($"{FormatNumber( GetResearchPerArrivalAtB() )} research")
+								</div>
+							</div>
+						</div>
+
+						<div class="stats-section">
+							<h3>Point B Arrivals</h3>
+
+							<div class="equation-row">
+								<div>Arrivals at Point B per second =</div>
+
+								<div class="equation-term">
+									@FormatNumber( Game?.VisualTrainSpeed ?? 0 )
+									<div class="tooltip">route progress per second</div>
+								</div>
+
+								<div class="equation-symbol">=</div>
+
+								<div class="equation-result">
+									@($"{FormatNumber( GetArrivalsAtBPerSecond() )} arrivals / sec")
+								</div>
+							</div>
+						</div>
+
+						<div class="stats-section">
+							<h3>Speed Source</h3>
+
+							<div class="equation-row">
+								<div>Route speed =</div>
+
+								<div class="equation-term">
+									@FormatNumber( 0.08 )
+									<div class="tooltip">base route speed</div>
+								</div>
+
+								<div class="equation-symbol">*</div>
+
+								<div class="equation-term">
+									@FormatNumber( Game?.CoalIncomeMultiplier ?? 1 )
+									<div class="tooltip">train speed from coal</div>
+								</div>
+
+								<div class="equation-symbol">=</div>
+
+								<div class="equation-result">
+									@($"{FormatNumber( Game?.VisualTrainSpeed ?? 0 )} route progress / sec")
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
 		</div>
 
 		@foreach ( var text in FloatingTexts )
@@ -423,6 +538,32 @@
 	double GetCoalSpeedStrength()
 	{
 		return 0.5;
+	}
+
+	double GetResearchPerTrainCar()
+	{
+		return 1.0;
+	}
+
+	double GetResearchPerArrivalAtB()
+	{
+		if ( Game is null )
+			return 0;
+
+		return Game.TrainCars * GetResearchPerTrainCar();
+	}
+
+	double GetArrivalsAtBPerSecond()
+	{
+		if ( Game is null )
+			return 0;
+
+		return Game.VisualTrainSpeed;
+	}
+
+	double GetResearchPerSecond()
+	{
+		return GetArrivalsAtBPerSecond() * GetResearchPerArrivalAtB();
 	}
 
 	Vector2 GetRoutePositionOnly( float progress )
@@ -616,11 +757,17 @@
 			Game?.TrainCars ?? 0
 		);
 
+		int researchHash = System.HashCode.Combine(
+			Game?.Research ?? 0,
+			Game?.ResearchPerArrival ?? 0
+		);
+
 		int extraHash = System.HashCode.Combine(
 			animationHash,
 			fuelHash,
 			tabHash,
-			routeHash
+			routeHash,
+			researchHash
 		);
 
 		return System.HashCode.Combine(
